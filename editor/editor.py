@@ -4,6 +4,8 @@ import pygame
 from tileloader import KagImage, Tile, TileMap
 from input import Input
 
+__version__ = "0.0.1"
+
 RESOURCE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Sprites")
 
 
@@ -14,7 +16,8 @@ HELP_TEXT = """Controls:
 
 While being in mapping mode:
     - Left mouse: Places the selected tile, you can hold it down and use it as a brush.
-    - W A S D: Move the camera"""
+    - W A S D: Move the camera
+    - K: To save the map"""
 
 def get_path(file: str) -> str:
 	"""Gets the resource absolute path"""
@@ -33,6 +36,7 @@ class Editor:
         self.font = None
         self.tip_label = None
         self.help_label = None
+        self.version_label = None
         self.status = 0
         self.last_status = 0
         self.selected_tile_name = "Dirt Background"
@@ -60,6 +64,7 @@ class Editor:
 
         self.tip_label = self.font.render("Press F1 for help!", 0, (255, 255, 255))
         self.help_label = self.font.render(HELP_TEXT, 0, (255, 255, 255))
+        self.version_label = self.font.render("Version: " + __version__, 0, (255, 255, 255))
         self.fps_label = self.font.render("FPS: 0", 0, (255, 255, 255))
 
         self.tick_changed = False
@@ -111,8 +116,6 @@ class Editor:
         self.tick_changed = False
         self.input.update()
 
-        self.fps_label = self.font.render("FPS: %.2f" % self.clock.get_fps(), 0, (255, 255, 255))
-
         if self.status == 0: # Menu
             if self.input.is_click(pygame.K_F2):
                 self.set_status(1)
@@ -124,6 +127,8 @@ class Editor:
                 self.set_status(0)
             elif self.input.is_click(pygame.K_F1):
                 self.set_status(2)
+            elif self.input.is_click(pygame.K_k):
+                self.map.save_map()
 
             if self.input.is_pressed(pygame.K_a):
                 self.add_offset(self.map.tile_size // 4)
@@ -147,6 +152,7 @@ class Editor:
                         self.last_coords = coords
                         x, y = coords
                         self.map.set_tile(x, y, self.selected_tile_name)
+                        print("Put tile in:", coords)
                         self.tick_changed = True
         elif self.status == 2: # Help
             if self.input.is_click(pygame.K_ESCAPE):
@@ -154,7 +160,7 @@ class Editor:
             if self.input.is_click(pygame.K_F2):
                 self.set_status(1)
             if self.input.is_click(pygame.K_F1):
-                self.set_status(0)
+                self.set_status(self.last_status)
 
     def on_render(self, force_draw=False):
         self.display.fill((59, 112, 118))
@@ -167,7 +173,9 @@ class Editor:
             self.render_multiline_text([40, 40], HELP_TEXT, self.font)
 
         self.display.blit(self.tip_label, (20, self.height - self.font.get_height() - 20))
+        self.fps_label = self.font.render("FPS: %.2f" % self.clock.get_fps(), 0, (255, 255, 255))
         self.display.blit(self.fps_label, (20, 20))
+        self.display.blit(self.version_label, (self.width - self.version_label.get_size()[0] - 20, self.height - self.font.get_height() - 20))
 
         pygame.display.update()
 
@@ -186,7 +194,6 @@ class Editor:
                 self.on_event(event)
             self.on_update()
             self.on_render()
-            print(self.clock.get_fps())
             self.clock.tick(144)
         self.on_cleanup()
 

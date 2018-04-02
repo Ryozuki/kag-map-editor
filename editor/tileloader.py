@@ -4,6 +4,7 @@ import os
 from random import randint
 
 TILES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tiles.json")
+MAPS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "maps/")
 TILE_SIZE = 32
 
 def hex_to_rgb(hex: str):
@@ -78,11 +79,9 @@ class TileMap:
                 self.tiles[x].append(sky_info)
 
     def get_map_coords_from_mouse(self, mouse_pos, offset=(0, 0)):
-        return (mouse_pos[0] // self.tile_size + round(-offset[0] / self.tile_size), mouse_pos[1] // self.tile_size + round(-offset[1] / self.tile_size))
+        return (round(mouse_pos[0]) // self.tile_size + round(-offset[0] / self.tile_size), round(mouse_pos[1]) // self.tile_size + round(-offset[1] / self.tile_size))
 
     def draw(self, display, sprites, offset=(0, 0)):
-        if self.surface is None:
-            self.surface = pygame.Surface(self.width, self.height)
         for x in range(self.width):
             for y in range(self.height):
                 tile: Tile = self.tiles[x][y]
@@ -92,7 +91,19 @@ class TileMap:
                     sprite: KagImage = sprites[tile.file_name]
                     scale = sprite.get_scale_factor()
                     rect = tile.get_rect()
-                    sprite.draw(self.surface, (scale[0] * rect.w  * x + offset[0], scale[1] * rect.h * y + offset[1]), tile)
+                    sprite.draw(display, (scale[0] * rect.w  * x + offset[0], scale[1] * rect.h * y + offset[1]), tile)
+
+    def save_map(self):
+        arr = pygame.PixelArray(pygame.Surface((self.width, self.height)))
+        for x in range(self.width):
+            for y in range(self.height):
+                tile: Tile = self.tiles[x][y]
+                arr[x, y] = pygame.Color(tile.color[0], tile.color[1], tile.color[2])
+        surface = arr.make_surface()
+        if not os.path.exists(MAPS_PATH):
+            os.makedirs(MAPS_PATH)
+        pygame.image.save(surface, os.path.join(MAPS_PATH, "map.png"))
+        print("Map saved")
 
 class KagImage:
     def __init__(self, image_path):
@@ -100,7 +111,6 @@ class KagImage:
         self.size = self.image.get_size()
 
         # Make the tile 8x8 be 32x32
-        # TODO: Add wheel zoom
         self.scaled_image = pygame.transform.scale(self.image, (int(self.size[0]*4), int(self.size[1]*4)))
         self.scaled_size = self.scaled_image.get_size()
 

@@ -108,3 +108,6 @@ venv.bak/
 *.kdev4
 *.vscode
 
+maps/
+
+TODO.txt
