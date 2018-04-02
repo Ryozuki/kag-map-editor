@@ -1,0 +1,25 @@
+
+- New map, with size etc
+- Load map
+- Resize map
+- Online mapping: Long future
+- Draw special tiles with color directly?
+
+Make a way to add blocks.
+Maybe make a .png config file with json
+For example, where is the tile. And the image color png?
+
+
+Contact kag2d owners to tell them if i can use sprites etc... when program works.
+
+ladders automatically add wood background?
+
+https://wiki.kag2d.com/wiki/Map
+
+- Draw selected tile on bottom left
+
+Render multiline text correctly
+
+pygame can only render one sentence at a time
+
+idk about \t tab char
