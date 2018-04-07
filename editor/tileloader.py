@@ -79,7 +79,10 @@ class TileMap:
                 self.tiles[x].append(sky_info)
 
     def get_map_coords_from_mouse(self, mouse_pos, offset=(0, 0)):
-        return (round(mouse_pos[0]) // self.tile_size + round(-offset[0] / self.tile_size), round(mouse_pos[1]) // self.tile_size + round(-offset[1] / self.tile_size))
+        offset_x, offset_y = offset
+        tile_x = (mouse_pos[0] + -offset_x) // self.tile_size
+        tile_y = (mouse_pos[1] + -offset_y) // self.tile_size
+        return tile_x, tile_y
 
     def draw(self, display, sprites, offset=(0, 0)):
         for x in range(self.width):

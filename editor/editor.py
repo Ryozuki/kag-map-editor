@@ -19,9 +19,11 @@ While being in mapping mode:
     - W A S D: Move the camera
     - K: To save the map"""
 
+
 def get_path(file: str) -> str:
-	"""Gets the resource absolute path"""
-	return os.path.join(RESOURCE_PATH, file)
+    """Gets the resource absolute path"""
+    return os.path.join(RESOURCE_PATH, file)
+
 
 class Editor:
     def __init__(self):
@@ -48,7 +50,6 @@ class Editor:
             return
         self.last_status = self.status
         self.status = n
-        self.tick_changed = True
 
     def on_load(self):
         self.sprites["world"] = KagImage(get_path("world.png"))
@@ -66,8 +67,6 @@ class Editor:
         self.help_label = self.font.render(HELP_TEXT, 0, (255, 255, 255))
         self.version_label = self.font.render("Version: " + __version__, 0, (255, 255, 255))
         self.fps_label = self.font.render("FPS: 0", 0, (255, 255, 255))
-
-        self.tick_changed = False
 
         self.display = pygame.display.set_mode(self.size, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
@@ -93,27 +92,17 @@ class Editor:
 
     def on_mouse_wheel_down(self):
         self.map.set_zoom(False)
-        self.tick_changed = True
 
     def on_mouse_wheel_up(self):
         self.map.set_zoom(True)
-        self.tick_changed = True
-
-    def is_pressed(self, key):
-        return pygame.key.get_pressed()[key] == 1
-
-    def is_mouse_pressed(self, button):
-        return pygame.mouse.get_pressed()[button] == 1
 
     def add_offset(self, x=0, y=0):
         if x == 0 and y == 0:
             return
         self.map_offset[0] += x
         self.map_offset[1] += y
-        self.tick_changed = True
 
     def on_update(self):
-        self.tick_changed = False
         self.input.update()
 
         if self.status == 0: # Menu
@@ -132,7 +121,6 @@ class Editor:
 
             if self.input.is_pressed(pygame.K_a):
                 self.add_offset(self.map.tile_size // 4)
-                self.tick_changed = True
             elif self.input.is_pressed(pygame.K_d):
                 self.add_offset(-self.map.tile_size // 4)
 
@@ -153,7 +141,6 @@ class Editor:
                         x, y = coords
                         self.map.set_tile(x, y, self.selected_tile_name)
                         print("Put tile in:", coords)
-                        self.tick_changed = True
         elif self.status == 2: # Help
             if self.input.is_click(pygame.K_ESCAPE):
                 self.set_status(0)
@@ -162,7 +149,7 @@ class Editor:
             if self.input.is_click(pygame.K_F1):
                 self.set_status(self.last_status)
 
-    def on_render(self, force_draw=False):
+    def on_render(self):
         self.display.fill((59, 112, 118))
         self.sprites["background"].draw_scaled_bg(self.display, (-100, -100))
 
@@ -179,23 +166,19 @@ class Editor:
 
         pygame.display.update()
 
-    def on_cleanup(self):
-        pygame.quit()
-        sys.exit(0)
-
     def on_execute(self):
         self.on_init()
         self.on_load()
 
-        self.on_render(True)
-
-        while(self._running):
+        while self._running:
             for event in pygame.event.get():
                 self.on_event(event)
             self.on_update()
             self.on_render()
             self.clock.tick(144)
-        self.on_cleanup()
+
+        pygame.quit()
+        sys.exit(0)
 
 
 if __name__ == "__main__":
