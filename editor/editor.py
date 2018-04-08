@@ -140,7 +140,6 @@ class Editor:
                         self.last_coords = coords
                         x, y = coords
                         self.map.set_tile(x, y, self.selected_tile_name)
-                        print("Put tile in:", coords)
         elif self.status == 2: # Help
             if self.input.is_click(pygame.K_ESCAPE):
                 self.set_status(0)

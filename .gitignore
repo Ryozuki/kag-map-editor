@@ -110,4 +110,8 @@ venv.bak/
 
 maps/
 
+.directory
+
+.idea/
+
 TODO.txt

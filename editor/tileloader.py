@@ -2,40 +2,12 @@ import json
 import pygame
 import os
 from random import randint
+import logic
+from logic import Tile, Rect
 
 TILES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tiles.json")
 MAPS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "maps/")
 TILE_SIZE = 32
-
-def hex_to_rgb(hex: str):
-    hex = hex.lstrip('#')
-    return [int(hex[i:i+2], 16) for i in (0, 2, 4)]
-
-class Rect:
-    def __init__(self, x, y, w, h):
-        self.x: int = x
-        self.y: int = y
-        self.w: int = w
-        self.h: int = h
-
-class Tile:
-    def __init__(self, name, color, file_name, coords, visible=True):
-        self.visible = visible
-        self.name = name
-        self.file_name = file_name.rstrip(".png")
-        self.color = hex_to_rgb(color)
-        self.coords = []
-        self.index = None
-        self.tile_surface = None
-
-        for x in coords:
-            self.coords.append(Rect(x[0], x[1], x[2], x[3]))
-
-    def get_rect(self) -> Rect:
-        if self.index is None:
-            self.index = randint(0, len(self.coords) - 1)
-        return self.coords[self.index]
-
 
 
 class TileMap:
@@ -59,24 +31,18 @@ class TileMap:
         if self.tile_size < 16:
             self.tile_size = 16
 
-    def get_tile_info(self, name: str) -> Tile:
-        for x in self.tile_info:
-            if x["name"] == name:
-                tile = Tile(x["name"], x["color"], x.get("file_name", ""), x.get("coords", []), visible=x.get("visible", True))
-                return tile
-
     def set_tile(self, x, y, tile_name):
-        info: Tile = self.get_tile_info(tile_name)
+        info: Tile = logic.get_tile_by_name(tile_name)
         if self.tiles and self.tiles[x][y]:
             self.tiles[x][y] = info
 
     def fill_sky(self):
-        sky_info = self.get_tile_info("sky")
+        sky_tile: Tile = logic.get_tile_by_name("Sky")
         self.tiles = []
         for x in range(self.width):
             self.tiles.append([])
             for y in range(self.height):
-                self.tiles[x].append(sky_info)
+                self.tiles[x].append(sky_tile)
 
     def get_map_coords_from_mouse(self, mouse_pos, offset=(0, 0)):
         offset_x, offset_y = offset
@@ -88,25 +54,26 @@ class TileMap:
         for x in range(self.width):
             for y in range(self.height):
                 tile: Tile = self.tiles[x][y]
-                if tile.name not in ["sky"]:
+                if tile.visible:
                     if list(map(lambda x: x*4, sprites[tile.file_name].get_scale_factor()))[0] * 2 != self.tile_size:
                         sprites[tile.file_name].scale_by(self.tile_size // 8, self.tile_size // 8)
                     sprite: KagImage = sprites[tile.file_name]
-                    scale = sprite.get_scale_factor()
-                    rect = tile.get_rect()
-                    sprite.draw(display, (scale[0] * rect.w  * x + offset[0], scale[1] * rect.h * y + offset[1]), tile)
+                    rect = tile.get_rect((x, y), self.tiles)
+                    sprite.draw(display, (x, y), rect, offset)
 
     def save_map(self):
         arr = pygame.PixelArray(pygame.Surface((self.width, self.height)))
         for x in range(self.width):
             for y in range(self.height):
                 tile: Tile = self.tiles[x][y]
-                arr[x, y] = pygame.Color(tile.color[0], tile.color[1], tile.color[2])
+                arr[x, y] = pygame.Color(tile.color[0], tile.color[1],
+                                         tile.color[2])
         surface = arr.make_surface()
         if not os.path.exists(MAPS_PATH):
             os.makedirs(MAPS_PATH)
         pygame.image.save(surface, os.path.join(MAPS_PATH, "map.png"))
         print("Map saved")
+
 
 class KagImage:
     def __init__(self, image_path):
@@ -130,8 +97,8 @@ class KagImage:
     def draw_scaled_bg(self, display, position=(0, 0)):
         display.blit(self.scaled_image, position)
 
-    def draw(self, surface, position, tile: Tile):
-        x, y = position
+    def draw(self, surface: pygame.Surface, position, rect: Rect, offset=(0, 0)):
         scale = self.get_scale_factor()
-        rect = tile.get_rect()
-        surface.blit(self.scaled_image, (x, y), area=(rect.x, rect.y, rect.w * scale[0], rect.h * scale[1]))
+        x = scale[0] * rect.w * position[0] + offset[0]
+        y = scale[1] * rect.h * position[1] + offset[1]
+        surface.blit(self.scaled_image, (x, y), area=rect.scale(scale).to_tuple())
