@@ -66,8 +66,7 @@ class TileMap:
         for x in range(self.width):
             for y in range(self.height):
                 tile: Tile = self.tiles[x][y]
-                arr[x, y] = pygame.Color(tile.color[0], tile.color[1],
-                                         tile.color[2])
+                arr[x, y] = pygame.Color(tile.color[0], tile.color[1], tile.color[2])
         surface = arr.make_surface()
         if not os.path.exists(MAPS_PATH):
             os.makedirs(MAPS_PATH)
